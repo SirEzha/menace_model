@@ -105,6 +105,15 @@ class Menace:
                 if winner == "O":
                     self._menace_system[event[0]][event[1]] += 1
 
+    def check_symmetry(self):
+        """
+        Generally we have 7 symmetries of any board. These are symmetry by vertical axis, horizontal
+        and diagonals. There are also 3 rotational symmetries. When we encounter a board, we want to
+        find, which type of symmetry compared to the base version is it and store the formula for
+        transforming the coordinates according to it.
+        """
+        
+
     def __str__(self):
         return f"There are {len(self._menace_system)} variants in the system"
 
