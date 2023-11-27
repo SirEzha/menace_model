@@ -4,21 +4,38 @@ represents the amount of gumdrops of particular color.
 """
 
 import random
+import symmetry
 
 
 class Menace:
     def __init__(self):
         self._menace_system = {}
+        self._symm_dict = {
+            "rotation_90": [7, 4, 1, 8, 5, 2, 9, 6, 3],
+            "rotation_180": [9, 8, 7, 6, 5, 4, 3, 2, 1],
+            "rotation_270": [3, 6, 9, 2, 5, 8, 1, 4, 7],
+            "vertical": [3, 2, 1, 6, 5, 4, 9, 8, 7],
+            "horizontal": [7, 8, 9, 4, 5, 6, 1, 2, 3],
+            "diagonal_main": [1, 4, 7, 2, 5, 8, 3, 6, 9],
+            "diagonal_sub": [9, 6, 3, 8, 5, 2, 7, 4, 1]
+        }
 
     def play_game(self):
+        new_board = ""
+        symmetry_type = ""
+
         board = "_________"
         history = []  # stores tuples of (board, move)
         while self.game_over(board) == -1:
             if board not in self._menace_system:
-                self._menace_system[board] = [0] * 9
-                for i, elem in enumerate(board):
-                    if elem == "_":
-                        self._menace_system[board][i] = 10
+                new_board, symmetry_type = symmetry.find_symm(self._menace_system, board, self._symm_dict)
+                if new_board is not None:
+                    board = new_board
+                else:
+                    self._menace_system[board] = [0] * 9
+                    for i, elem in enumerate(board):
+                        if elem == "_":
+                            self._menace_system[board][i] = 10
 
             possible_moves = []
             for i, elem in enumerate(self._menace_system[board]):
@@ -27,6 +44,8 @@ class Menace:
                         possible_moves.append(i)
 
             move = random.choice(possible_moves)
+            if symmetry_type:
+                symmetry.revert_symm(board, symmetry_type, self._symm_dict)
             history.append((board, move))
             board = self.make_move(board, move)
         winner = self.game_over(board)
@@ -104,48 +123,6 @@ class Menace:
                     self._menace_system[event[0]][event[1]] -= 1
                 if winner == "O":
                     self._menace_system[event[0]][event[1]] += 1
-
-    def check_symmetry(self, board):
-        """
-        Generally we have 7 symmetries of any board. These are symmetry by vertical axis, horizontal
-        and diagonals. There are also 3 rotational symmetries. When we encounter a board, we want to
-        find, which type of symmetry compared to the base version is it and store the formula for
-        transforming the coordinates according to it.
-        """
-
-        symm_dict = {
-            "rotation_90": [7, 4, 1, 8, 5, 2, 9, 6, 3],
-            "rotation_180": [9, 8, 7, 6, 5, 4, 3, 2, 1],
-            "rotation_270": [3, 6, 9, 2, 5, 8, 1, 4, 7],
-            "vertical": [3, 2, 1, 6, 5, 4, 9, 8, 7],
-            "horizontal": [7, 8, 9, 4, 5, 6, 1, 2, 3],
-            "diagonal_main": [1, 4, 7, 2, 5, 8, 3, 6, 9],
-            "diagonal_sub": [9, 6, 3, 8, 5, 2, 7, 4, 1]
-        }
-
-        # rotational
-
-        # 90 deg
-        new_board = ''.join([str(board[x-1]) for x in symm_dict["rotation_90"]])
-        # here we check for a suitable turn
-        # ________________________________
-        # now we do the reverse
-        new_board = ''.join([str(returned_board[x-1]) for x in symm_dict["rotation_270"]])
-
-        # 180 deg
-        new_board = ''.join([str(board[x - 1]) for x in symm_dict["rotation_180"]])
-        # here we check for a suitable turn
-        # ________________________________
-        # now we do the reverse
-        new_board = ''.join([str(returned_board[x - 1]) for x in symm_dict["rotation_180"]])
-
-        # 270 deg
-        new_board = ''.join([str(board[x - 1]) for x in symm_dict["rotation_270"]])
-        # here we check for a suitable turn
-        # ________________________________
-        # now we do the reverse
-        new_board = ''.join([str(returned_board[x - 1]) for x in symm_dict["rotation_90"]])
-
 
     def __str__(self):
         return f"There are {len(self._menace_system)} variants in the system"
