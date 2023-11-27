@@ -1,15 +1,22 @@
 """
-We store the current number of 'gumdrops' as an array, where each element represents corresponding move, and the number
-represents the amount of gumdrops of particular color.
+For now, the model more or less works.
+However, it seems, in the situation that both players can win with the next move, and pc makes the turn,
+it, for some reason prefers to defend rather that win the game.
 """
 
 import random
+
 import symmetry
 
 
 class Menace:
     def __init__(self):
         self._menace_system = {}
+
+        # dictionary containing all possible symmetries of a board. It has the following syntax:
+        # numbers in the arrays in the dictionary represent in which places will the elements from old board
+        # now be staying (i.e. in rotation for 90 degrees CLOCKWISE first element will be on the third place).
+        # The elements are numbered from left to right from top to bottom
         self._symm_dict = {
             "rotation_90": [7, 4, 1, 8, 5, 2, 9, 6, 3],
             "rotation_180": [9, 8, 7, 6, 5, 4, 3, 2, 1],
@@ -21,37 +28,54 @@ class Menace:
         }
 
     def play_game(self):
-        new_board = ""
         symmetry_type = ""
 
         board = "_________"
         history = []  # stores tuples of (board, move)
+
+        # cycle goes until game is over
         while self.game_over(board) == -1:
+
             if board not in self._menace_system:
                 new_board, symmetry_type = symmetry.find_symm(self._menace_system, board, self._symm_dict)
+
+                # symmetry was found
                 if new_board is not None:
                     board = new_board
+
+                # symmetry wasn't found
                 else:
                     self._menace_system[board] = [0] * 9
                     for i, elem in enumerate(board):
                         if elem == "_":
                             self._menace_system[board][i] = 3
 
+            # stores moves in the format [n, i, m, n, k, i, ...], where numbers represent index of a move in a string
+            # i.e. move in the left top square would be numbered 0, move in the center would be numbered 4.
+            # note, that we can store multiple instances of the same number, this increases the chances of successful
+            # moves to be chosen
             possible_moves = []
+
             for i, elem in enumerate(self._menace_system[board]):
                 if elem > 0:
                     for _ in range(elem):
                         possible_moves.append(i)
 
+            # if the list of moves in the menace was empty due to unfortunate sequence of games we
+            # just add all the possible moves to the pool.
             if not possible_moves:
                 for i, elem in enumerate(board):
                     if elem == "_":
                         possible_moves.append(i)
             move = random.choice(possible_moves)
+
+            # if we originally discovered the board as a symmetry, we should convert back
             if symmetry_type:
                 board, move = symmetry.revert_symm(move, board, symmetry_type, self._symm_dict)
+
             history.append((board, move))
             board = self.make_move(board, move)
+
         winner = self.game_over(board)
         self.update_menace(history, winner)
 
@@ -71,8 +95,9 @@ class Menace:
 
     def game_over(self, board):
         """
+        Awfully written part, it just checks if there is a winner, need to rewrite (works tho).
         :param board:
-        :return: 0 = draw, 1 = crosses, 2 = circles
+        :return: 0 = draw, 1 = crosses, 2 = circles, -1 - no winner
         """
 
         is_draw = True
@@ -116,6 +141,11 @@ class Menace:
         return -1
 
     def update_menace(self, history, winner):
+        """
+        System learns based on the previous game.
+        Indexation in updating system means that we increase or decrease the number of "gumdrops" in the
+        corresponding turn possibility pool.
+        """
         for i, event in enumerate(history):
             if i % 2 == 0:
                 if winner == "X":
@@ -129,24 +159,71 @@ class Menace:
                     self._menace_system[event[0]][event[1]] += 1
 
     def __str__(self):
+        "Magic method used in debugging"
         return f"There are {len(self._menace_system)} variants in the system"
 
-    def print_system(self):
-        print(self._menace_system)
+    def menace_vs_player(self):
+        symmetry_type = ""
 
-    # def menace_vs_player(self):
-    #     symmetry_type = ""
-    #
-    #     board = "_________"
-    #     turn = 1
-    #
-    #     if turn % 2 == 1:
-    #
+        board = "_________"
+        turn = 1
+
+        # for now, it assumes you make only correct turns and if the game ends in a draw it says player won
+        while True:
+            # player's turn
+            turn = int(input("make a turn\n"))
+            board = self.make_move(board, turn - 1)
+            if self.game_over(board) != -1:
+                print("player won")
+                break
+
+            # menace's turn
+            possible_moves = []
+            if board not in self._menace_system:
+                new_board, symmetry_type = symmetry.find_symm(self._menace_system, board, self._symm_dict)
+
+                # symmetry was found
+                if new_board is not None:
+                    board = new_board
+
+                # symmetry wasn't found, just add all possible turns
+                else:
+                    for i, elem in enumerate(board):
+                        if elem == "_":
+                            possible_moves.append(i)
+
+            # if we didn't already fill the possible moves with all the possibilities
+            if not possible_moves:
+                for i, elem in enumerate(self._menace_system[board]):
+                    if elem > 0:
+                        for _ in range(elem):
+                            possible_moves.append(i)
+
+                # if the list of moves in the menace was empty due to unfortunate sequence of games we
+                # just add all the possible moves to the pool.
+                if not possible_moves:
+                    for i, elem in enumerate(board):
+                        if elem == "_":
+                            possible_moves.append(i)
+
+            move = random.choice(possible_moves)
+
+            # if we originally discovered the board as a symmetry, we should convert back
+            if symmetry_type:
+                board, move = symmetry.revert_symm(move, board, symmetry_type, self._symm_dict)
+
+            board = self.make_move(board, move)
+            print(board)
+            if self.game_over(board) != -1:
+                print("pc won")
+                break
 
 
 if __name__ == "__main__":
     menace = Menace()
-    for i in range(5000):
+    for _ in range(5000):
         menace.play_game()
 
     print(menace)
+
+    menace.menace_vs_player()
