@@ -45,7 +45,7 @@ class Menace:
 
             if not possible_moves:
                 for i, elem in enumerate(board):
-                    if elem != "_":
+                    if elem == "_":
                         possible_moves.append(i)
             move = random.choice(possible_moves)
             if symmetry_type:
@@ -134,10 +134,19 @@ class Menace:
     def print_system(self):
         print(self._menace_system)
 
+    # def menace_vs_player(self):
+    #     symmetry_type = ""
+    #
+    #     board = "_________"
+    #     turn = 1
+    #
+    #     if turn % 2 == 1:
+    #
+
 
 if __name__ == "__main__":
     menace = Menace()
-    for _ in range(700):
+    for i in range(5000):
         menace.play_game()
 
     print(menace)

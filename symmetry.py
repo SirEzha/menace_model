@@ -27,6 +27,30 @@ def find_symm(menace_dict, board, symm_dict):
         if new_board in menace_dict:
             return_array = [new_board, "rotation_90"]
 
+    # vertical
+    if not return_array:
+        new_board = ''.join([str(board[x - 1]) for x in symm_dict["vertical"]])
+        if new_board in menace_dict:
+            return_array = [new_board, "vertical"]
+
+    # horizontal
+    if not return_array:
+        new_board = ''.join([str(board[x - 1]) for x in symm_dict["horizontal"]])
+        if new_board in menace_dict:
+            return_array = [new_board, "horizontal"]
+
+    # main diagonal
+    if not return_array:
+        new_board = ''.join([str(board[x - 1]) for x in symm_dict["diagonal_main"]])
+        if new_board in menace_dict:
+            return_array = [new_board, "diagonal_main"]
+
+    # sub diagonal
+    if not return_array:
+        new_board = ''.join([str(board[x - 1]) for x in symm_dict["diagonal_sub"]])
+        if new_board in menace_dict:
+            return_array = [new_board, "diagonal_sub"]
+
     return return_array
 
 
