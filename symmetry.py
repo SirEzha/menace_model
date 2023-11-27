@@ -30,6 +30,8 @@ def find_symm(menace_dict, board, symm_dict):
     return return_array
 
 
-def revert_symm(board, symm_type, symm_dict):
+def revert_symm(move, board, symm_type, symm_dict):
     new_board = ''.join([str(board[x - 1]) for x in symm_dict[symm_type]])
-    return new_board
+
+    new_move = symm_dict[symm_type].index(move) + 1
+    return new_board, new_move

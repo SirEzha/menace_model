@@ -35,7 +35,7 @@ class Menace:
                     self._menace_system[board] = [0] * 9
                     for i, elem in enumerate(board):
                         if elem == "_":
-                            self._menace_system[board][i] = 10
+                            self._menace_system[board][i] = 3
 
             possible_moves = []
             for i, elem in enumerate(self._menace_system[board]):
@@ -43,9 +43,13 @@ class Menace:
                     for _ in range(elem):
                         possible_moves.append(i)
 
+            if not possible_moves:
+                for i, elem in enumerate(board):
+                    if elem != "_":
+                        possible_moves.append(i)
             move = random.choice(possible_moves)
             if symmetry_type:
-                symmetry.revert_symm(board, symmetry_type, self._symm_dict)
+                board, move = symmetry.revert_symm(move, board, symmetry_type, self._symm_dict)
             history.append((board, move))
             board = self.make_move(board, move)
         winner = self.game_over(board)
@@ -127,9 +131,13 @@ class Menace:
     def __str__(self):
         return f"There are {len(self._menace_system)} variants in the system"
 
+    def print_system(self):
+        print(self._menace_system)
+
 
 if __name__ == "__main__":
     menace = Menace()
-    menace.check_symmetry("XOOX_____")
+    for _ in range(700):
+        menace.play_game()
 
     print(menace)
